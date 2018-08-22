@@ -48,7 +48,7 @@ func (d *gcpVolDriver) syncWithHost() error {
 	for _, v := range volumesNames {
 		log.Printf("Synchronizing: existing volume '%s' found\n", v)
 		// create a GCStorage bucket for that volume if not exist
-		bucketName, err := d.handleCreateGCStorageBucket(v)
+		bucketName, err := d.handleCreateGCStorageBucket(v, bucketLocationDef, bucketClassDef)
 		if err != nil {
 			return err
 		}

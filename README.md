@@ -49,7 +49,7 @@ $ service docker start
 ## Usage
 - Create a volume
 ````
-$ docker volume create --driver gcstorage --name datastore
+$ docker volume create --driver gcstorage --name datastore --opt location=EUROPE-WEST1 --opt class=REGIONAL
 datastore
 ````
 The GCS Bucket name is defined by: **gcsProjectID_volumeName**

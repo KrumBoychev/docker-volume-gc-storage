@@ -8,6 +8,9 @@ import (
 	gstorage "google.golang.org/api/storage/v1"
 )
 
+const bucketLocationDef string = "US"
+const bucketClassDef string = "STANDARD"
+
 type gcpVolDriver struct {
 	gcpClient         *gstorage.BucketsService
 	gcpServiceKeyPath string
@@ -47,14 +50,24 @@ func newGcpVolDriver(driverRootDir, gcpServiceKeyPath string) (*gcpVolDriver, er
 }
 
 func (d *gcpVolDriver) Create(r volume.Request) volume.Response {
-	log.Printf("Creation of volume '%s'...\n", r.Name)
+	bucketLocation := bucketLocationDef
+	bucketClass := bucketClassDef
+	if _, ok := r.Options["location"]; ok {
+		bucketLocation = r.Options["location"]
+	}
+	if _, ok := r.Options["class"]; ok {
+                bucketClass = r.Options["class"]
+        }
+
+	log.Printf("Creation of volume '%s' location: '%s' class: '%s'...\n", r.Name, bucketLocation, bucketClass)
 	// Create a host mountpoint
 	m, err := d.handleCreateMountpoint(r.Name)
 	if err != nil {
 		return volume.Response{Err: err.Error()}
 	}
+
 	// Create a bucket on GCP Storage
-	bucketName, err := d.handleCreateGCStorageBucket(r.Name)
+	bucketName, err := d.handleCreateGCStorageBucket(r.Name, bucketLocation, bucketClass)
 	if err != nil {
 		return volume.Response{Err: err.Error()}
 	}

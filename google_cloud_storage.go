@@ -11,7 +11,7 @@ import (
 	"golang.org/x/oauth2/google"
 	gstorage "google.golang.org/api/storage/v1"
 	"google.golang.org/cloud"
-	gcloudstorage "google.golang.org/cloud/storage"
+        gcloudstorage "google.golang.org/cloud/storage"
 )
 
 // getGCPProjectID returns the unique ID of the Google Cloud Platform project defined in the service key JSON
@@ -98,7 +98,8 @@ func (d *gcpVolDriver) IsGCSBucketExist(bucketName string) (bool, error) {
 	}
 	for _, b := range buckets.Items {
 		if b.Name == bucketName {
-			log.Printf("Google Cloude Storage bucket '%s' already exists\n", bucketName)
+			log.Printf("Google Cloude Storage bucket '%s' location '%s' class '%s' already exists\n", 
+				bucketName, b.Location, b.StorageClass)
 			return true, nil
 		}
 	}
@@ -107,30 +108,31 @@ func (d *gcpVolDriver) IsGCSBucketExist(bucketName string) (bool, error) {
 }
 
 // createGCPStorageBucket creates a bucket on GCStorage from its name
-func (d *gcpVolDriver) createGCPStorageBucket(bucketName string) (*gstorage.Bucket, error) {
+func (d *gcpVolDriver) createGCPStorageBucket(bucketName string, bucketLocation string, bucketClass string) (*gstorage.Bucket, error) {
 	bucket, err := d.gcpClient.Insert(
 		d.gcpProjectID,
 		&gstorage.Bucket{
 			Name:         bucketName,
-			Location:     "US",
-			StorageClass: "STANDARD",
+			Location:     bucketLocation,
+			StorageClass: bucketClass,
 		}).Do()
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Google Cloud Storage Bucket '%s' created for the project '%s'\n", bucketName, d.gcpProjectID)
+	log.Printf("Google Cloud Storage Bucket '%s' created for the project '%s' location '%s' class '%s'\n", 
+			bucketName, d.gcpProjectID, bucketLocation, bucketClass)
 	return bucket, nil
 }
 
 // handleCreateGCStorageBucket handles the safe creation of a GCStorage from its name
-func (d *gcpVolDriver) handleCreateGCStorageBucket(volumeName string) (string, error) {
+func (d *gcpVolDriver) handleCreateGCStorageBucket(volumeName string, bucketLocation string, bucketClass string) (string, error) {
 	bucketName := d.getGCPBucketName(volumeName)
 	bucketExist, err := d.IsGCSBucketExist(bucketName)
 	if err != nil {
 		return "", err
 	}
 	if !bucketExist {
-		_, err := d.createGCPStorageBucket(bucketName)
+		_, err := d.createGCPStorageBucket(bucketName, bucketLocation, bucketClass)
 		if err != nil {
 			return "", err
 		}
